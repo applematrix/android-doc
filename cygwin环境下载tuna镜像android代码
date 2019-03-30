@@ -1,0 +1,40 @@
+1、下载cygwin，在windows下安装unix环境，https://cygwin.com/install.html，下载安装包安装
+安装时一定要选择上git相关软件包，如果没有选择也没有关系，后面在运行一次setup安装包，选择git即可
+
+
+以下内容为参考清华的android镜像站下载指导
+参考 Google 教程 https://source.android.com/source/downloading.html， 将 https://android.googlesource.com/ 全部使用 https://aosp.tuna.tsinghua.edu.cn/ 代替即可。
+1、进入cygwin的根目录，执行以下命令
+mkdir ~/bin
+PATH=~/bin:$PATH
+将~/bin加入环境变量中
+
+2、执行以下命令下载repo工具到bin目录
+cd bin
+curl https://mirrors.tuna.tsinghua.edu.cn/git/git-repo -o repo
+将repo工具修改为可执行状态：
+chmod +x repo
+
+3、回到主目录创建一个新的工作目录并进入
+cd ~
+mkdir WORKING_DIRECTORY
+cd WORKING_DIRECTORY
+4、配置git
+git config --global user.name "your name"
+git config --global user.email "your email@xxx.com"
+
+5、执行repo init命令初始化仓
+python ~/bin/repo init -u https://aosp.tuna.tsinghua.edu.cn/platform/manifest
+cygwin环境需要显示通过python执行repo，不支持python3，需要下载python2.7的环境，需要安装gpg，否则会报gpg不可用的错误
+
+repo 命令执行时会去google的官网更新，按以下方法将更新源替换为tuna镜像的站点：
+repo的运行过程中会尝试访问官方的git源更新自己，如果想使用tuna的镜像源进行更新，可以将如下内容复制到你的~/.bashrc里
+export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo/'
+
+6、执行python ~/bin/repo sync命令即可下载代码
+
+7、中间可能会遇到错误：
+curl: (22) The requested URL returned error: 404 Not Found
+Server does not provide clone.bundle; ignoring.
+
+无视即可
