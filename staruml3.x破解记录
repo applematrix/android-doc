@@ -1,0 +1,17 @@
+综合网上的各种材料
+1、安装asar工具，管理员权限执行npm install -g asar
+2、进入staruml的安装目录，如C:\Program Files\StarUML\resources
+3、解压app.asar文件。执行asar extract app.asar app。解压到app文件
+4、进入到解压出来的app目录，找到注册文件app\src\engine\license-manager.js
+5、修改函数：
+  checkLicenseValidity () {
+    this.validate().then(() => {
+      setStatus(this, true)
+    }, () => {
+	  setStatus(this, true)
+      //setStatus(this, false)
+      //UnregisteredDialog.showDialog()
+    })
+  }
+6、重新打包替换C:\Program Files\StarUML\resources下的app.asar。asar pack app app.asar
+7、重新启动staruml即可
