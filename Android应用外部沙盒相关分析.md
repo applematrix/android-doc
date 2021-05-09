@@ -204,7 +204,7 @@ setupAppDir的过程在vold进程中的volumeManager中完成。在volumeManager
 
 ​	PrepareAppDirFromRoot的主要逻辑如下（system/vold/Utils.cpp）：
 
- ![](C:\Users\huangdezhi\Documents\GitHub\android-doc\images\storage\分析-PrepareAppDirFromRoot的流程概要.png)
+ ![](https://github.com/applematrix/android-doc/blob/master/images/storage/%E5%88%86%E6%9E%90-PrepareAppDirFromRoot%E7%9A%84%E6%B5%81%E7%A8%8B%E6%A6%82%E8%A6%81.png)
 
 ​	
 
@@ -217,7 +217,7 @@ setupAppDir的过程在vold进程中的volumeManager中完成。在volumeManager
 ​		对应的代码如下所示：
 
      ```c++
-status_t PrepareAndroidDirs(const std::string& volumeRoot) {
+    status_t PrepareAndroidDirs(const std::string& volumeRoot) {
     std::string androidDir = volumeRoot + kAndroidDir;
     std::string androidDataDir = volumeRoot + kAppDataDir;
     std::string androidObbDir = volumeRoot + kAppObbDir;
@@ -327,7 +327,7 @@ status_t PrepareAndroidDirs(const std::string& volumeRoot) {
 
 
 
-![](C:\Users\huangdezhi\Documents\GitHub\android-doc\images\storage\分析-gid设置策略.png)
+![](https://github.com/applematrix/android-doc/blob/master/images/storage/%E5%88%86%E6%9E%90-gid%E8%AE%BE%E7%BD%AE%E7%AD%96%E7%95%A5.png)
 
 ​	以上策略对应的是sdcardfs不开启的情况（即R版本后的默认情况），如果sdcard开启，则：
 
@@ -342,7 +342,7 @@ status_t PrepareAndroidDirs(const std::string& volumeRoot) {
 应用沙盒的目录，默认的mode，无论在哪个目录下，均为02770（注意设置了粘滞位），即rwxrws---
 
 ```c++
-	// mode = 770, plus sticky bit on directory to inherit GID when apps
+    // mode = 770, plus sticky bit on directory to inherit GID when apps
     // create subdirs
     mode_t mode = S_IRWXU | S_IRWXG | S_ISGID;
 ```
@@ -372,7 +372,7 @@ projectId是底层文件系统用于管理配额的参数信息（详细如何�
 此外，对于应用沙盒目录下的cache目录具有特殊处理，该cache目录的projectId从PROJECT_ID_EXT_CACHE_START（30000）开始分配：
 
 ```c++
-		if (appDir == kAppDataDir && depth == 1 && component == "cache/") {
+	if (appDir == kAppDataDir && depth == 1 && component == "cache/") {
             // All dirs use the "app" project ID, except for the cache dirs in
             // Android/data, eg Android/data/com.foo/cache
             // Note that this "sticks" - eg subdirs of this dir need the same
@@ -479,7 +479,7 @@ int SetQuotaProjectId(const std::string& path, long projectId) {
 
 
 
-![](C:\Users\huangdezhi\Documents\GitHub\android-doc\images\storage\分析-顶层沙盒的目录.png)
+![](https://github.com/applematrix/android-doc/blob/master/images/storage/%E5%88%86%E6%9E%90-%E9%A1%B6%E5%B1%82%E6%B2%99%E7%9B%92%E7%9A%84%E7%9B%AE%E5%BD%95.png)
 
 ##### SetDefaultAcl
 
@@ -549,7 +549,7 @@ status_t SetDefaultAcl(const std::string& path, mode_t mode, uid_t uid, gid_t gi
 }
 ```
 
-![](C:\Users\huangdezhi\Documents\GitHub\android-doc\images\storage\分析-顶层沙盒目录的ACL属性设置.png)
+![](https://github.com/applematrix/android-doc/blob/master/images/storage/%E5%88%86%E6%9E%90-%E9%A1%B6%E5%B1%82%E6%B2%99%E7%9B%92%E7%9B%AE%E5%BD%95%E7%9A%84ACL%E5%B1%9E%E6%80%A7%E8%AE%BE%E7%BD%AE.png)
 
 简单的说明就是，系统根据uid、gid、mod信息、additional group的信息，将其分别填写到对应的posix_acl_attr_entry的字段中，在通过setxattr函数将整个acl信息设置到文件目录中去。其中：
 
