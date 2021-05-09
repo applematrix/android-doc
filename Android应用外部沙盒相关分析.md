@@ -28,7 +28,7 @@
 
 应用的沙盒的路径通过Environment的buildExternalStorageAppFilesDirs来构造，构造路径的时序图如下所示：
 
-![](images\storage\分析-构造外部沙盒路径.png)
+![](https://github.com/applematrix/android-doc/blob/master/images/storage/%E5%88%86%E6%9E%90-%E6%9E%84%E9%80%A0%E5%A4%96%E9%83%A8%E6%B2%99%E7%9B%92%E8%B7%AF%E5%BE%84.png)
 
 沙盒路径的构造通过Environment来创建，由于支持多用户，所以实际上内部又调用了UserEnvironment的接口进行路径的获取，首先通过getExternalDirs函数从StorageManager来查询对用户的所有可写的volume列表：
 
