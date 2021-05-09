@@ -12,7 +12,7 @@
 
 可以获取到外部沙盒的文件，从而对外部的文件进行操作。如果应用的沙盒不存在，该操作将会触发系统创建应用沙盒，相关流程如下：
 
-![](images\storage\应用访问沙盒的入口.png)
+![](https://github.com/applematrix/android-doc/blob/master/images/storage/%E5%BA%94%E7%94%A8%E8%AE%BF%E9%97%AE%E6%B2%99%E7%9B%92%E7%9A%84%E5%85%A5%E5%8F%A3.png)
 
 该接口主要做了以下几件事情：
 
