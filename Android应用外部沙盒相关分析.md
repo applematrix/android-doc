@@ -33,7 +33,7 @@
 沙盒路径的构造通过Environment来创建，由于支持多用户，所以实际上内部又调用了UserEnvironment的接口进行路径的获取，首先通过getExternalDirs函数从StorageManager来查询对用户的所有可写的volume列表：
 
 ```java
-		public File[] getExternalDirs() {
+	public File[] getExternalDirs() {
             final StorageVolume[] volumes = StorageManager.getVolumeList(mUserId,
                     StorageManager.FLAG_FOR_WRITE);
             final File[] files = new File[volumes.length];
@@ -47,7 +47,7 @@
 之后就可以从StorageVolume的getPathFile接口中拿到对应的文件路径，再基于已有的目录下通过buildPaths把对应的路径构造出来：
 
 ```java
-		public File[] buildExternalStorageAppFilesDirs(String packageName) {
+	public File[] buildExternalStorageAppFilesDirs(String packageName) {
             return buildPaths(getExternalDirs(), DIR_ANDROID, DIR_DATA, packageName, DIR_FILES);
         }
 ```
