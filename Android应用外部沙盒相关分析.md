@@ -170,13 +170,13 @@ StorageManagerService中的mkdirs时的核心逻辑，主要是做参数的检�
 
 前面的分析中StorageManagerService调用vold的setupAppDir的过程如下：
 
-![](C:\Users\huangdezhi\Documents\GitHub\android-doc\images\storage\分析-StorageManagerService调用setupAppDir.png)
+![](https://github.com/applematrix/android-doc/blob/master/images/storage/%E5%88%86%E6%9E%90-StorageManagerService%E8%B0%83%E7%94%A8setupAppDir.png)
 
 
 
 setupAppDir的过程在vold进程中的volumeManager中完成。在volumeManager中setupAppDir时流程如下：
 
-![](C:\Users\huangdezhi\Documents\GitHub\android-doc\images\storage\分析-volumemanager setupAppDir的入口.png)
+![](https://github.com/applematrix/android-doc/blob/master/images/storage/%E5%88%86%E6%9E%90-volumemanager%20setupAppDir%E7%9A%84%E5%85%A5%E5%8F%A3.png)
 
 先找到对应的路径，具体应该是创建到那个volume中，在将外部的路径转化为内部路径，之后调用PrepareAppDirFromRoot接口创建目录。
 
