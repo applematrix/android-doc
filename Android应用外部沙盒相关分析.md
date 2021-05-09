@@ -216,7 +216,7 @@ setupAppDir的过程在vold进程中的volumeManager中完成。在volumeManager
 
 ​		对应的代码如下所示：
 
-     ```c++
+```C++
     status_t PrepareAndroidDirs(const std::string& volumeRoot) {
     std::string androidDir = volumeRoot + kAndroidDir;
     std::string androidDataDir = volumeRoot + kAppDataDir;
@@ -255,7 +255,7 @@ setupAppDir的过程在vold进程中的volumeManager中完成。在volumeManager
     
     return OK;
 }
-     ```
+```
 
 逻辑比较简单：
 
