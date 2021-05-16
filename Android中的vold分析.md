@@ -39,9 +39,10 @@ vold进程启动的过程如下所示：
 2. 通过VolumeManager的单例模式创建出VolumeManager实例
 3. 通过NetlinkManager单例创建NetlinkManager实例。NetlinkManager是接收事件处理的入口，volume相关的事件通过NetlinkManager接收后发送给VolumeManager处理。
 4. 启动VolumeManager
-5. 启动NetLinkManager
-6. 通过VoldNativeService将binder服务publish到ServiceManager中，从这个阶段开始，系统可以通过binder服务访问vold
-7. 通过coldboot函数执行冷启动的处理。
+5. 处理VolumeManager的配置
+6. 启动NetLinkManager
+7. 通过VoldNativeService将binder服务publish到ServiceManager中，从这个阶段开始，系统可以通过binder服务访问vold
+8. 通过coldboot函数执行冷启动的处理。
 
 
 
@@ -207,6 +208,12 @@ int Loop::destroyAll() {
 ```
 
 直接遍历“/dev/block”目录下所有以loop开头的设备，通过LOOP_GET_STATUS64查询环回设备的信息，找到vold相关的环回设备（lo_crypt_name为“vold:”开头），将设备与文件系统断开。
+
+
+
+### VolumeManager的配置处理
+
+主要功能是读取系统中的fstab信息，TODO：
 
 
 
