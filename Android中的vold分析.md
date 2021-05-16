@@ -31,7 +31,7 @@ service vold /system/bin/vold \
 
 vold进程启动的过程如下所示：
 
-![](C:\Users\huangdezhi\Documents\GitHub\android-doc\images\storage\vold-vold进程启动.png)
+![](https://github.com/applematrix/android-doc/blob/master/images/storage/vold-vold%E8%BF%9B%E7%A8%8B%E5%90%AF%E5%8A%A8.png)
 
 ​	init进程启动后，通过init.rc脚本直接拉起vold进程执行，在vold的main函数入口中，进入后，进程主要做以下动作：
 
@@ -49,7 +49,7 @@ vold进程启动的过程如下所示：
 
 volumeManager启动的整体流程如下所示：
 
-![](C:\Users\huangdezhi\Documents\GitHub\android-doc\images\storage\vold-volumanager的start整体过程.png)
+![](https://github.com/applematrix/android-doc/blob/master/images/storage/vold-volumanager%E7%9A%84start%E6%95%B4%E4%BD%93%E8%BF%87%E7%A8%8B.png)
 
 volumeManager是一个事件驱动型的服务，首先做清理动作：
 
@@ -63,7 +63,7 @@ volumeManager是一个事件驱动型的服务，首先做清理动作：
 
 #### unmountAll卸载所有挂载点
 
-![](C:\Users\huangdezhi\Documents\GitHub\android-doc\images\storage\vold-volume卸载所有的挂载.png)
+![](https://github.com/applematrix/android-doc/blob/master/images/storage/vold-volume%E5%8D%B8%E8%BD%BD%E6%89%80%E6%9C%89%E7%9A%84%E6%8C%82%E8%BD%BD.png)
 
 ```c++
 int VolumeManager::unmountAll() {
@@ -214,7 +214,7 @@ int Loop::destroyAll() {
 
 vold内部使用netlink类型的socket与内核进行交互，netlink是一种特殊的socket(https://linux.die.net/man/7/netlink)。整体的过程如下所示：
 
-![](C:\Users\huangdezhi\Documents\GitHub\android-doc\images\storage\vold-NetlinkManager启动过程.png)
+![](https://github.com/applematrix/android-doc/blob/master/images/storage/vold-NetlinkManager%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B.png)
 
 首先创建了一个的socket地址：
 
@@ -273,7 +273,7 @@ nl_family指定了协议族为AF_NETLINK，表明vold希望通过socket来与内
 
 相关的类的结构如下：
 
-![](C:\Users\huangdezhi\Documents\GitHub\android-doc\images\storage\vold-NetlinkManager的类结构.png)
+![](https://github.com/applematrix/android-doc/blob/master/images/storage/vold-NetlinkManager%E7%9A%84%E7%B1%BB%E7%BB%93%E6%9E%84.png)
 
 socket的事件监听，通过Android里面已经包装好的SocketListener启动监听（startListener）后，即可通过onEvent回调接收到内核发送出来的事件消息。其中的事件流程，后面再介绍。
 
