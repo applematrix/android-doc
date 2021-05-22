@@ -377,6 +377,11 @@ static void do_coldboot(DIR* d, int lvl) {
 
 
 
-## NetlinkManager接收内核事件的机制
+## VolumeManager接收内核事件的机制
 
-TODO:
+VolumeManager实际上就是通过NetlinkManager内部建立了一个Netlink类型的socket来接收kernel的各种事件。如下图所示：
+
+![](images/storage/vold-vold接收kernel的事件响应.png)
+
+当内核有事件发送时，NetLinkManager将能够接收到，NetlinkHandler过滤出其中block设备上包的事件后，将其转给volumeManager进行处理。vold对kernel的事件主要关心块设备的添加、变化和移除。
+
