@@ -213,7 +213,41 @@ int Loop::destroyAll() {
 
 ### VolumeManager的配置处理
 
-主要功能是读取系统中的fstab信息，TODO：
+主要功能是读取系统中的fstab信息，系统中的fstab信息一般保存在系统中的etc目录下，配置处理主要将其中文件读取并解析出来。vold按照以下优先级查找。
+
+首先查询fstab的后缀，依次查询：
+
+- ro.boot.fstab_suffix
+- ro.boot.hardware
+- ro.boot.hardware.platform
+
+prop项的值，将查询出来的后缀依次与以下路径进行拼接，检查其中的文件是否存在
+
+- /odm/etc/fstab.
+- /vendor/etc/fstab.
+- /first_stage_ramdisk/fstab.
+
+如果存在则将其内容作为fstab的配置信息解析处理。以pixel为例：其ro.boot.hardware为blueline，但是该后缀下没有任何文件匹配，而ro.boot.hardware.platform值为sdm845，而对应有/vendor/etc/fstab.sdm845的文件存在，因此，pixel将使用该配置文件作为fstab信息。其内容大致如下：
+
+```ini
+# Android fstab file.
+
+#<src>                                              <mnt_point>        <type>      <mnt_flags and options>                               <fs_mgr_flags>
+system                                              /system            ext4        ro,barrier=1                                          wait,slotselect,avb=vbmeta,logical,first_stage_mount
+system_ext                                          /system_ext        ext4        ro,barrier=1                                          wait,slotselect,avb,logical,first_stage_mount
+vendor                                              /vendor            ext4        ro,barrier=1                                          wait,slotselect,avb,logical,first_stage_mount
+product                                             /product           ext4        ro,barrier=1                                          wait,slotselect,avb,logical,first_stage_mount
+/dev/block/by-name/metadata                         /metadata          ext4        noatime,nosuid,nodev,discard,data=journal,commit=1    wait,formattable,first_stage_mount
+/dev/block/bootdevice/by-name/userdata              /data              f2fs        noatime,nosuid,nodev,discard,reserve_root=32768,resgid=1065,fsync_mode=nobarrier       latemount,wait,check,fileencryption=ice,keydirectory=/metadata/vold/metadata_encryption,quota,formattable,sysfs_path=/sys/devices/platform/soc/1d84000.ufshc,reservedsize=128M,checkpoint=fs
+/dev/block/bootdevice/by-name/misc                  /misc              emmc        defaults                                              defaults
+/dev/block/bootdevice/by-name/modem                 /vendor/firmware_mnt          vfat        ro,shortname=lower,uid=1000,gid=1000,dmask=227,fmask=337,context=u:object_r:firmware_file:s0   wait,slotselect
+/devices/platform/soc/a600000.ssusb/a600000.dwc3*   auto               vfat        defaults                                              voldmanaged=usb:auto
+/dev/block/zram0                                    none               swap        defaults                                              zramsize=2147483648,max_comp_streams=8,zram_backingdev_size=512M
+
+
+```
+
+以上主要标识了文件中的源设备、挂载点、文件类型、挂载参数和标志为。与vold有关系的主要是fs_mgr_flags，如果在该flag中指定了voldmanaged的设备，在vold中可以动态加载和移除
 
 
 
