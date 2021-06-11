@@ -8,7 +8,7 @@ windows10提供了Windows Subsystem for Linux的环境系统，可以直接在wi
 
 连接微软的应用市场的时候可能会报错，需要在浏览器选项中，开启SSL3.0：
 
-![image-20210611222640301](wsl/image-20210611222640301.png)
+![image-20210611222640301](images/wsl/image-20210611222640301.png)
 
 安装ubuntu的时候：
 
@@ -16,15 +16,15 @@ windows10提供了Windows Subsystem for Linux的环境系统，可以直接在wi
 
 执行到这一步时，并没有很顺利的success，原因在于，安装linux安装包的时候，文件启用了压缩方式，C:\users\用户名\AppData\Local\Packages下找到以下文件：
 
-![image-20210611221201626](images\wsl\image-20210611221201626.png)
+![image-20210611221201626](images/wsl/image-20210611221201626.png)
 
 右键选择文件属性-高级，将压缩内容以便 节省磁盘空间即可。
 
-![image-20210611221806418](images\wsl\image-20210611221806418.png)
+![image-20210611221806418](images/wsl/image-20210611221806418.png)
 
 安装完成后，即可在开始菜单中看到unbutu的启动菜单
 
-![image-20210611222236458](images\wsl\image-20210611222236458.png)
+![image-20210611222236458](images/wsl/image-20210611222236458.png)
 
 点击菜单即可在linux下进入ubuntu系统
 
@@ -34,7 +34,7 @@ windows10提供了Windows Subsystem for Linux的环境系统，可以直接在wi
 
 Window Terminals不是必选安装的，但是window Terminals界面操作可能比较方便，安装后，可以在Windows Terminal下快速进入ubuntu系统终端：
 
-![image-20210611223016203](images\wsl\image-20210611223016203.png)
+![image-20210611223016203](images/wsl/image-20210611223016203.png)
 
 ## 下载AOSP代码
 
@@ -50,15 +50,15 @@ Window Terminals不是必选安装的，但是window Terminals界面操作可能
 
 执行到make的时候可能会遇到如下错误：
 
-![image-20210611223627088](images\wsl\image-20210611223627088.png)
+![image-20210611223627088](images/wsl/image-20210611223627088.png)
 
 原因是windows下的文件系统是大小写不敏感的，而AOSP编译要求文件系统是大小写敏感系统，要求把源码树移动到大小写敏感的文件系统下。分析AOSP的编译命令可以看到：
 
-![image-20210611223907521](images\wsl\image-20210611223907521.png)
+![image-20210611223907521](images/wsl/image-20210611223907521.png)
 
 他的要求只是检测了out目录的大小写，因此没必要将整个目录重新挪动，windows的ntfs文件系统支持开启大小写敏感，只需要通过windows的工具将out目录的大小写敏感开启，以管理员身份运行powershell，执行以下命令:
 
-![image-20210611224439442](images\wsl\image-20210611224439442.png)
+![image-20210611224439442](images/wsl/image-20210611224439442.png)
 
 fsutil file setCaseSensitiveInfo 目录 enable
 
