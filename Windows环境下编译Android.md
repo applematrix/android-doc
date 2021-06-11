@@ -4,7 +4,11 @@ windows10提供了Windows Subsystem for Linux的环境系统，可以直接在wi
 
 ## 在Window下开启WSL系统
 
-按照https://docs.microsoft.com/en-us/windows/wsl/install-win10指示一步一步安装。需要加入windows的开发者预览计划。也很简单，直接注册即可。我按照手动安装的方式安装成功。
+按照
+
+https://docs.microsoft.com/en-us/windows/wsl/install-win10
+
+指示一步一步安装。需要加入windows的开发者预览计划。也很简单，直接注册即可。我按照手动安装的方式安装成功。
 
 连接微软的应用市场的时候可能会报错，需要在浏览器选项中，开启SSL3.0：
 
