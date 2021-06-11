@@ -8,11 +8,11 @@ windows10提供了Windows Subsystem for Linux的环境系统，可以直接在wi
 
 连接微软的应用市场的时候可能会报错，需要在浏览器选项中，开启SSL3.0：
 
-![image-20210611222640301](wsl\image-20210611222640301.png)
+![image-20210611222640301](wsl/image-20210611222640301.png)
 
 安装ubuntu的时候：
 
-![Ubuntu unpacking in the Windows console](images\wsl\ubuntuinstall.png)
+![Ubuntu unpacking in the Windows console](images/wsl/ubuntuinstall.png)
 
 执行到这一步时，并没有很顺利的success，原因在于，安装linux安装包的时候，文件启用了压缩方式，C:\users\用户名\AppData\Local\Packages下找到以下文件：
 
