@@ -42,9 +42,23 @@ Window Terminals不是必选安装的，但是window Terminals界面操作可能
 
 ## 下载AOSP代码
 
-安装必要的软件后，国内通过中科大镜像或者清华镜像下载，进行代码下载。建议代码根目录设置为大小写敏感，否则影响后面的编译（fsutil file setCaseSensitiveInfo xxx enable），不再赘述
+安装必要的软件后，国内通过中科大镜像或者清华镜像下载，进行代码下载。一定要将AOSP的根目录设置为支持大小写，再进行代码下载同步，否则后面可能出现编译是无法找到类定义等错误。方法：以管理员身份启动powershell，执行以下命令（代码根目录设置为e盘下的AOSP目录）：
+
+```shell
+fsutil file setCaseSensitiveInfo /mnt/e/AOSP enable
+```
+
+
 
 ## AOSP编译
+
+需要安装必要的软件：
+
+```shell
+sudo apt-get install git-core gnupg flex bison build-essential zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig
+```
+
+注意不要更换apt源，目前国内的源还是老版本的ubuntu源，20.04的ubuntu跟换源后，可能存在软件无法安装的问题。直接使用自带的源即可。
 
 跟android官网上的描述操作一样，进入代码根目录：
 
@@ -52,19 +66,12 @@ Window Terminals不是必选安装的，但是window Terminals界面操作可能
 - lunch选择目标类型。一般可以直接lunch aosp_arm-eng或lunch aosp_arm64-eng
 - make
 
+
+
+### 文件系统大小写错误
+
 执行到make的时候可能会遇到如下错误：
 
 ![image-20210611223627088](images/wsl/image-20210611223627088.png)
 
-原因是windows下的文件系统是大小写不敏感的，而AOSP编译要求文件系统是大小写敏感系统，要求把源码树移动到大小写敏感的文件系统下。分析AOSP的编译命令可以看到：
-
-![image-20210611223907521](images/wsl/image-20210611223907521.png)
-
-他的要求只是检测了out目录的大小写，因此没必要将整个目录重新挪动，windows的ntfs文件系统支持开启大小写敏感，只需要通过windows的工具将out目录的大小写敏感开启，以管理员身份运行powershell，执行以下命令:
-
-![image-20210611224439442](images/wsl/image-20210611224439442.png)
-
-fsutil file setCaseSensitiveInfo 目录 enable
-
-
-
+原因是windows下的文件系统是大小写不敏感的，而AOSP编译要求文件系统是大小写敏感系统，要求把源码树移动到大小写敏感的文件系统下。
