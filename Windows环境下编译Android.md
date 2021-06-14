@@ -1,6 +1,6 @@
 # Windows环境下编译Android
 
-windows10提供了Windows Subsystem for Linux的环境系统，可以直接在windows下安装linux并运行，而且该环境能够区别于普通的虚拟机，能够更高效的运行。
+windows10提供了Windows Subsystem for Linux的环境系统，可以直接在windows下安装linux并运行，而且该环境不同于普通的虚拟机，能够更高效的运行。
 
 ## 在Window下开启WSL系统
 
@@ -22,7 +22,7 @@ https://docs.microsoft.com/en-us/windows/wsl/install-win10
 
 ![image-20210611221201626](images/wsl/image-20210611221201626.png)
 
-右键选择文件属性-高级，将压缩内容以便 节省磁盘空间即可。
+右键选择文件属性-高级，将压缩内容以便 节省磁盘空间勾选去除即可。
 
 ![image-20210611221806418](images/wsl/image-20210611221806418.png)
 
@@ -40,9 +40,11 @@ Window Terminals不是必选安装的，但是window Terminals界面操作可能
 
 ![image-20210611223016203](images/wsl/image-20210611223016203.png)
 
+直接通过应用市场安装即可。
+
 ## 下载AOSP代码
 
-安装必要的软件后，国内通过中科大镜像或者清华镜像下载，进行代码下载。一定要将AOSP的根目录设置为支持大小写，再进行代码下载同步，否则后面可能出现编译是无法找到类定义等错误。方法：以管理员身份启动powershell，执行以下命令（代码根目录设置为e盘下的AOSP目录）：
+安装必要的软件后，国内通过中科大镜像或者清华镜像下载，进行代码下载。一定要将AOSP的根目录设置为支持大小写，再进行代码下载同步，否则后面可能出现编译时会报环境检查错误、无法找到类定义等错误。方法：以管理员身份启动powershell，执行以下命令（以代码根目录设置为e盘下的AOSP目录为例）：
 
 ```shell
 fsutil file setCaseSensitiveInfo /mnt/e/AOSP enable
@@ -58,7 +60,7 @@ fsutil file setCaseSensitiveInfo /mnt/e/AOSP enable
 sudo apt-get install git-core gnupg flex bison build-essential zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig
 ```
 
-注意不要更换apt源，目前国内的源还是老版本的ubuntu源，20.04的ubuntu跟换源后，可能存在软件无法安装的问题。直接使用自带的源即可。
+注意不要更换apt源，目前国内的源还是老版本的ubuntu源，WSL下的20.04的ubuntu跟换源后，可能存在软件无法安装的问题。直接使用自带的源安装更新。
 
 跟android官网上的描述操作一样，进入代码根目录：
 
@@ -66,7 +68,9 @@ sudo apt-get install git-core gnupg flex bison build-essential zip curl zlib1g-d
 - lunch选择目标类型。一般可以直接lunch aosp_arm-eng或lunch aosp_arm64-eng
 - make
 
+![](images/wsl/image-20210614095747477.png)
 
+漫长的等待...
 
 ### 文件系统大小写错误
 
