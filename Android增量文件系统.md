@@ -28,7 +28,13 @@ struct IncFsControl final {
 };
 ```
 
-IncFsControl数据结构中包含cmd：pendingReads：logs：
+IncFsControl数据结构中包含
+
+cmd：控制命令的文件句柄，root目录下的.pending_reads文件
+
+pendingReads：root目录下的.pending_reads文件
+
+logs：log文件的文件句柄，root目录下的.log句柄
 
 ### IncFsSpan
 
@@ -68,7 +74,19 @@ typedef enum {
 
 incfs的特性，主要就是2个，core类型和none类型
 
+### IncFsNewFileParams
 
+文件创建时的参数。
+
+```C++
+typedef struct {
+    IncFsSize size;
+    IncFsSpan metadata;
+    IncFsSpan signature;
+} IncFsNewFileParams;
+```
+
+size指定文件的大小，metadata为对应文件的标签数据，signature为签名数据。
 
 ### IncFsDataBlock
 
@@ -96,7 +114,7 @@ IncFsDataBlock代表数据块。
 
 ## cmd到root的转换
 
-在IncFsControl中存储了一个cmd的fd，系统拿到fd时需要进行fd到文件目录的转化。转化的过程如下：
+在IncFsControl中存储了一个cmd的fd，该fd是通过底层文件系统发送command命令的fd，系统拿到fd时需要进行fd到文件目录的转化。转化的过程如下：
 
 1. 首先通过fd获取到对应的cmd文件。直接去读取/proc/self/fd/下对应的文件fd的值，由于该路径下的文件是link文件所以直接读取该目录的连接后，可以获取到对应的cmd目录
 
@@ -138,6 +156,79 @@ bool isIncFsFd(int fd) {
 
 ## 文件的metadata
 
+```C++
+const auto res = ::getxattr(path, android::incfs::kMetadataAttrName, buffer, *bufferSize);
+```
+
+增量文件的扩展属性中的android::incfs::kMetadataAttrName（user.incfs.metadata）字段中，保存了文件的metadata属性，可以通过getxattr API获取到对应的信息。
+
+## 增量文件系统的索引
+
+在增量文件系统的根目录下，具有一个.index目录，该目录下保存整个增量目录下的文件id列表，每个文件都以对应的id作为文件名在.index目录下存放。
+
+## 文件的Id
+
+```C++
+const auto res = ::getxattr(path, android::incfs::kIdAttrName, buffer, sizeof(buffer));
+```
+
+增量文件的扩展属性中的android::incfs::kIdAttrName（user.incfs.id）字段中，保存了文件的id属性，可以通过getxattr API获取到对应的信息。
+
+## 文件的签名
+
+### 通过文件的id获取签名
+
+```C++
+IncFsErrorCode IncFs_GetSignatureById(const IncFsControl* control, IncFsFileId fileId,
+                                      char buffer[], size_t* bufferSize) {
+    if (!control) {
+        return -EINVAL;
+    }
+
+    // 找到IncFsControl的根目录
+    const auto root = rootForCmd(control->cmd);
+    if (root.empty()) {
+        return -EINVAL;
+    }
+    // 在根目录的.index目录中找到对应文件的id
+    auto file = android::incfs::path::join(root, android::incfs::kIndexDir, toStringImpl(fileId));
+    auto fd = openRaw(file);
+    if (fd < 0) {
+        return fd.get();
+    }
+    return getSignature(fd, buffer, bufferSize);
+}
+```
+
+文件的id在根目录的.index子目录下具有一个该文件id的文件，通过该文件id打开文件句柄后，可以通过getSignature获取对应句柄的签名信息。
+
+```C++
+static IncFsErrorCode getSignature(int fd, char buffer[], size_t* bufferSize) {
+    incfs_get_file_sig_args args = {
+            .file_signature = (uint64_t)buffer,
+            .file_signature_buf_size = (uint32_t)*bufferSize,
+    };
+
+    auto res = ::ioctl(fd, INCFS_IOC_READ_FILE_SIGNATURE, &args);
+    if (res < 0) {
+        if (errno == E2BIG) {
+            *bufferSize = INCFS_MAX_SIGNATURE_SIZE;
+        }
+        return -errno;
+    }
+    *bufferSize = args.file_signature_len_out;
+    return 0;
+}
+```
+
+签名信息直接通过ioctl给底层发送INCFS_IOC_READ_FILE_SIGNATURE的命令获取。
+
+### 通过文件的路径获取签名
+
+通过文件的路径获取签名是直接打开对应的文件句柄，向底层发送INCFS_IOC_READ_FILE_SIGNATURE的ioctl命令
+
+
+
 ## 增量文件的挂载（IncFs_Mount）
 
 增量文件系统的挂载，通过IncFs_Mount将源路径挂载到一个目标路径下，核心的处理逻辑如下：
@@ -162,7 +253,29 @@ bool isIncFsFd(int fd) {
     return control;
 ```
 
-其中backingPath为源路径，targetDir为目标路径，INCFS_NAME为：incremental-fs，挂载选项
+其中：
+
+backingPath为源路径
+
+targetDir为目标路径。挂载时要求targetDir必须是IncFs文件系统的空目录
+
+INCFS_NAME为：incremental-fs
+
+挂载选项：
+
+```C++
+static std::string makeMountOptionsString(IncFsMountOptions options) {
+    return StringPrintf("read_timeout_ms=%u,readahead=0,rlog_pages=%u,rlog_wakeup_cnt=1",
+                        unsigned(options.defaultReadTimeoutMs),
+                        unsigned(options.readLogBufferPages < 0
+                                         ? INCFS_DEFAULT_PAGE_READ_BUFFER_PAGES
+                                         : options.readLogBufferPages));
+}
+```
+
+指定了默认读取的超时时间值，readLogBufferPage的大小（默认是4）。
+
+mount完成以后，会在目标目录下通过makeControl创建对应的控制目录。控制目录包括：cmd目录和log目录
 
 
 
@@ -189,7 +302,123 @@ IncFsControl* IncFs_Open(const char* dir) {
 
 3、log。指向root下的.log
 
+## 新建增量文件（IncFs_MakeFile）
+
+核心的代码块如下所示：
+
+```C++
+IncFsErrorCode IncFs_MakeFile(const IncFsControl* control, const char* path, int32_t mode,
+                              IncFsFileId id, IncFsNewFileParams params) {
+    if (!control) {
+        return -EINVAL;
+    }
+
+    // 将文件的路径拆分出root路径和子路径
+    auto [root, subpath] = registry().rootAndSubpathFor(path);
+    if (root.empty()) {
+        PLOG(WARNING) << "[incfs] makeFile failed for path " << path << ", root is empty.";
+        return -EINVAL;
+    }
+    if (params.size < 0) {
+        LOG(WARNING) << "[incfs] makeFile failed for path " << path
+                     << ", size is invalid: " << params.size;
+        return -ERANGE;
+    }
+
+    // 将子路径拆分出parent目录和文件名
+    const auto [subdir, name] = android::incfs::path::splitDirBase(subpath);
+    // 将各参数设置到结构体中的各字段下
+    incfs_new_file_args args = {
+            .size = (uint64_t)params.size,
+            .mode = (uint16_t)mode,
+            .directory_path = (uint64_t)subdir.data(),
+            .file_name = (uint64_t)name.data(),
+            .file_attr = (uint64_t)params.metadata.data,
+            .file_attr_len = (uint32_t)params.metadata.size,
+    };
+    static_assert(sizeof(args.file_id.bytes) == sizeof(id.data));
+    memcpy(args.file_id.bytes, id.data, sizeof(args.file_id.bytes));
+
+    // 验证签名的有效性
+    if (auto err = validateSignatureFormat(params.signature)) {
+        return err;
+    }
+    
+    // 将签名信息设置到参数结构体中的各字段下
+    args.signature_info = (uint64_t)(uintptr_t)params.signature.data;
+    args.signature_size = (uint64_t)params.signature.size;
+
+    // 通过ioctl命令给底层文件系统发送一个INCFS_IOC_CREATE_FILE的命令，把参数结构体设置到底层，由底层完成文件的创建
+    // 此处是通过control中保存的cmd句柄发送
+    if (::ioctl(control->cmd, INCFS_IOC_CREATE_FILE, &args)) {
+        PLOG(WARNING) << "[incfs] makeFile failed for " << root << " / " << subdir << " / " << name
+                      << " of " << params.size << " bytes";
+        return -errno;
+    }
+    // 通过标准的chmod api修改mode
+    if (::chmod(android::incfs::path::join(root, subpath).c_str(), mode)) {
+        PLOG(WARNING) << "[incfs] couldn't change file mode to 0" << std::oct << mode;
+    }
+    return 0;
+}
+```
+
+## 新建增量文件系统下的目录（IncFs_MakeDir）
+
+与普通的文件系统无明显差异，通过mkdir创建。
+
 
 
 ## 增量文件的读取
 
+### 页读取（IncFs_WaitForPageReads）
+
+按页读取的核心数据结构为incfs_pending_read_info
+
+![image-20210815134705348](images/incfs/image-20210815134546693.png)
+
+该数据机构中含file_id(16个字节的数据)，超时值，以及块数据索引，以及序列号。
+
+## 增量文件的写入
+
+### 增量写入的数据结构（incfs_fill_block）
+
+```C++
+struct incfs_fill_block {
+	// 数据块的索引下标
+	__u32 block_index;
+	// 数据的长度
+	__u32 data_len;
+	// 数据的指针
+	__aligned_u64 data;
+	// 压缩的类型
+	__u8 compression;
+	//标签位
+	__u8 flags;
+	// 保留位
+	__u16 reserved1;
+	__u32 reserved2;
+	__aligned_u64 reserved3;
+};
+```
+
+### 块数据写入（writeBlocks）
+
+写入块数据时，批量的写入，通过
+
+```c++
+struct incfs_fill_blocks {
+  // 块的数量
+  __u64 count;
+
+  // incfs_fill_block的块指针
+  __aligned_u64 fill_blocks;
+
+};
+```
+
+writeBlocks通过ioctl下发INCFS_IOC_FILL_BLOCKS命令给底层写入块。简单的示意图如下所示：
+
+![image-20210815143456436](images/incfs/image-20210815143456436.png)
+
+writeBlocks将所有的写到同一个fd的block组装到一个incfs_fill_blocks块中，然后通过ioctl命令向底层发送一个INCFS_IOC_FILL_BLOCKS的命令执行写入命令。
