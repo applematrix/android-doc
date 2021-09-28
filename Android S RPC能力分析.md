@@ -6,7 +6,7 @@
 
 ## FdTrigger类
 
-![image-20210925103832837](C:\Users\huangdezhi\Documents\GitHub\android-doc\images\rpcbinder\image-20210925103832837.png)
+![image-20210925103832837](images/rpcbinder/image-20210925103832837.png)
 
 FdTrigge目前在Android版本上是一个pipe管道的管理器，其中保留了管道的read端和write端两个句柄。
 
@@ -16,7 +16,7 @@ FdTrigger将文件句柄包装后，提供了轮训的接口，检测对应的fd
 
 RpcTransport类是一个抽象的接口类，用于代表一个socket连接，一个socket连接就是一个RpcTransport类。
 
-![image-20210925105201215](images\rpcbinder\image-20210925105201215.png)
+![image-20210925105201215](images/rpcbinder/image-20210925105201215.png)
 
 
 
@@ -28,7 +28,7 @@ Transport主要提供了两个接口，一个是写接口，一个是读接口�
 
 RpcConnection类只是一个简单的封装，封装了实际的RpcTransport对象和对应的线程id：
 
-![image-20210925110851799](images\rpcbinder\image-20210925110851799.png)
+![image-20210925110851799](images/rpcbinder/image-20210925110851799.png)
 
 
 
@@ -44,7 +44,7 @@ RpcState目前分析是RpcBinder的核心类，该类承载了Rpc调用过程中
 
 在RpcState中传输的数据中，通过commandData类来传输，commandData的数据如下所示：
 
-![image-20210925135541969](images\rpcbinder\image-20210925135541969.png)
+![image-20210925135541969](images/rpcbinder/image-20210925135541969.png)
 
 主要就是一块内存的数据指针和数据的大小，传递的内存数据中包括两类：
 
@@ -54,7 +54,7 @@ RpcState目前分析是RpcBinder的核心类，该类承载了Rpc调用过程中
 
 ### RpcWireHeader
 
-![image-20210925140057780](images\rpcbinder\image-20210925140057780.png)
+![image-20210925140057780](images/rpcbinder/image-20210925140057780.png)
 
 
 
@@ -62,7 +62,7 @@ RpcWireHeader的传输头如上所示，在传输过程中，command默认为RPC
 
 ### RpcWireTransaction
 
-![image-20210925140755534](images\rpcbinder\image-20210925140755534.png)
+![image-20210925140755534](images/rpcbinder/image-20210925140755534.png)
 
 
 
@@ -76,13 +76,13 @@ servicedispatcher manager
 
 启动ServiceDispatcher
 
-![](images\rpcbinder\rpcsession分析-ServiceDispatcher启动过程.png)
+![](images/rpcbinder/rpcsession分析-ServiceDispatcher启动过程.png)
 
 ServiceDispatcher的启动功能过程如上所示
 
 ## Rpc会话启动过程
 
-![](images\rpcbinder\rpcsession分析-Rpc会话启动过程.png)
+![](images/rpcbinder/rpcsession分析-Rpc会话启动过程.png)
 
 在系统中目前发现的启动RpcBinder的客户端为ServiceManagerHost。以该类启动RpcSession的过程举例如上。理论任何应用都可以通过类似以上的流程连接到已有的Rpc服务。需要指定服务端IP和端口。
 
@@ -90,7 +90,7 @@ ServiceDispatcher的启动功能过程如上所示
 
 Rpc通信过程中的Parcel对象不同于普通的parcel对象，从S版本开始，Android对Parcel加入一个额外的特性，用于识别该Parcel将会通过Rpc的方式进行序列化。
 
-![image-20210925211534104](images\rpcbinder\image-20210925211534104.png)
+![image-20210925211534104](images/rpcbinder/image-20210925211534104.png)
 
 Rpc的Parcel具备一个RpcSession用于标识该Parcel会用于哪个Rpc会话。
 
@@ -98,7 +98,7 @@ Rpc的Parcel具备一个RpcSession用于标识该Parcel会用于哪个Rpc会话�
 
 ## BpBinder的创建过程
 
-![image-20210925210034393](images\rpcbinder\image-20210925210034393.png)
+![image-20210925210034393](images/rpcbinder/image-20210925210034393.png)
 
 Parcel在反序列化Binder对象的时候，如果发现其是在RpcBinder会话中。
 
@@ -106,7 +106,7 @@ Parcel在反序列化Binder对象的时候，如果发现其是在RpcBinder会�
 
 当拿到BpBinder对象的客户端，调用BpBinder的transact函数时，对外部，BpBinder与普通的binder调用方式没有差异，但是在前面BpBinder的创建时，如果该BpBinder是通过Rpc创建的，则该BpBinder的handle将关联到一个RpcSession，从而将通过如下的流程把数据通过传递到远端：
 
-![image-20210925213441759](images\rpcbinder\image-20210925213441759.png)
+![image-20210925213441759](images/rpcbinder/image-20210925213441759.png)
 
 
 
