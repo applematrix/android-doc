@@ -62,6 +62,10 @@ sudo apt-get install git-core gnupg flex bison build-essential zip curl zlib1g-d
 
 注意不要更换apt源，目前国内的源还是老版本的ubuntu源，WSL下的20.04的ubuntu跟换源后，可能存在软件无法安装的问题。直接使用自带的源安装更新。
 
+如果出现libncurses无法找到的我呢体，执行以下命令：
+
+sudo apt install libncurses5
+
 跟android官网上的描述操作一样，进入代码根目录：
 
 - source build/envsetup.sh。初始化编译环境
