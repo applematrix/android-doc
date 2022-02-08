@@ -155,11 +155,7 @@ static struct binder_thread *binder_get_thread_ilocked(
 
 ### binder_transaction
 
-表示一个传输的事务，
 
-![image-20220129220654170](images/binder/image-20220129220654170.png)
-
-from指向transaction发起方，to指向transaction接收方。
 
 ### binder_node
 
@@ -436,13 +432,21 @@ static int binder_translate_binder(struct flat_binder_object *fp,
 
 
 
-### binder_transaction的关系
+### binder_transaction
 
-binder调用时，通过binder_transaction来记录涉及IPC通信的线程之间的传输。传输数据的关系如下所示：
+binder调用时，通过binder_transaction来记录涉及IPC通信的线程之间的传输，binder_transaction表示一个传输的事务，
+
+![image-20220129220654170](images/binder/image-20220129220654170.png)
+
+from指向transaction发起方，to指向transaction接收方。传输数据的关系如下所示：
 
 ![](images/binder/image-20220206232219179.png)
 
 当应用进程发起binder调用传输请求时（发起调用或者reply调用），会对应在kernel空间有一个对应的binder_thread对象，而binder_thread中会保存一个transaction_stack的栈结构，用于保存关于binder请求的数据，包括：
 
 
+
+## binder线程的创建过程
+
+​	如果一个应用进程其中有binder服务，那么应用应用进程会为binder服务启动一个线程池，用来接受IPC其他应用进程的调用，一般来说线程池会启动16个线程，那么线程是如何启动的？
 
