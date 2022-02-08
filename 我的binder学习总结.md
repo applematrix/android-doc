@@ -433,6 +433,7 @@ static int binder_translate_binder(struct flat_binder_object *fp,
 
 
 ### binder_ref 
+binder_ref数据结构如下：
 
 
 
