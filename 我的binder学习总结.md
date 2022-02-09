@@ -155,11 +155,7 @@ static struct binder_thread *binder_get_thread_ilocked(
 
 ### binder_transaction
 
-表示一个传输的事务，
 
-![image-20220129220654170](images/binder/image-20220129220654170.png)
-
-from指向transaction发起方，to指向transaction接收方。
 
 ### binder_node
 
@@ -437,9 +433,13 @@ binder_ref数据结构如下：
 
 
 
-### binder_transaction的关系
+### binder_transaction
 
-binder调用时，通过binder_transaction来记录涉及IPC通信的线程之间的传输。传输数据的关系如下所示：
+binder调用时，通过binder_transaction来记录涉及IPC通信的线程之间的传输，binder_transaction表示一个传输的事务，
+
+![image-20220129220654170](images/binder/image-20220129220654170.png)
+
+from指向transaction发起方，to指向transaction接收方。传输数据的关系如下所示：
 
 ![](images/binder/image-20220206232219179.png)
 
