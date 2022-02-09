@@ -446,4 +446,74 @@ binder调用时，通过binder_transaction来记录涉及IPC通信的线程之�
 当应用进程发起binder调用传输请求时（发起调用或者reply调用），会对应在kernel空间有一个对应的binder_thread对象，而binder_thread中会保存一个transaction_stack的栈结构，用于保存关于binder请求的数据，包括：
 
 
+### binder线程是如何创建的
 
+每个进程涉及到IPC通信时，binder框架会为每个进程创建一系列的线程组，默认可以创建16个线程，可以通过ioctl命令设置最大的线程数量。任何应用运行过程中都会涉及到系统API的调用，而Android是CS的架构，因此API调用过程中必然会涉及到IPC通信，所以每个应用在首次调用API的时候会打开binder驱动，从而触发底层kernel中的数据结构的创建。
+IPC调用都是以ServiceManager的接口查询开始，以ActivityManager为例：
+
+![](images/binder/open_driver.png)
+
+当需要调用ActivityManager的接口时，由于AMS的接口实现在AMS中，需要进行跨进程通信，因此框架中的ActivityManager需要通过IPC binder机制与AMS通信，ActivityManager首先通过ServiceManager的getService方法获取serviceManager的服务管理类，然后再从ServiceManager中查询到AMS的binder对象返回。
+当首次调用getService时，底层会创建出ProcessState的单例对象，在单例对象的构造函数中打开binder驱动。
+
+#### ServiceManager的Binder线程池
+
+ServiceManager是系统中的一个二进制可执行程序，其启动时，将执行对应二进制的main函数：
+
+```c
+int main(int argc, char** argv) {
+	...
+
+    const char* driver = argc == 2 ? argv[1] : "/dev/binder";
+
+    sp<ProcessState> ps = ProcessState::initWithDriver(driver);
+    ps->setThreadPoolMaxThreadCount(0);
+    ps->setCallRestriction(ProcessState::CallRestriction::FATAL_IF_NOT_ONEWAY);
+
+    sp<ServiceManager> manager = sp<ServiceManager>::make(std::make_unique<Access>());
+    if (!manager->addService("manager", manager, false /*allowIsolated*/, IServiceManager::DUMP_FLAG_PRIORITY_DEFAULT).isOk()) {
+        LOG(ERROR) << "Could not self register servicemanager";
+    }
+
+    IPCThreadState::self()->setTheContextObject(manager);
+    ps->becomeContextManager();
+
+    sp<Looper> looper = Looper::prepare(false /*allowNonCallbacks*/);
+
+    BinderCallback::setupTo(looper);
+    ClientCallbackCallback::setupTo(looper, manager);
+
+    while(true) {
+        looper->pollAll(-1);
+    }
+
+    // should not be reached
+    return EXIT_FAILURE;
+}
+```
+主要逻辑解读如下：
+1. ProcessState::initWithDriver打开Binder驱动，此操作将会导致在kernel中为serviceanager这个进程创建binder_proc的对象
+2. 将ServiceManager这个对象作为一个Binder服务调用addService加入到列表中
+3. 调用setTheContextObject把ServiceManager对象设置到binder驱动中，此操作将会导致在底层binder驱动中生成一个对应于ServiceManager的Binder_node对象。
+4. 调用BinderCallback::setupTo把serviceManager这个进程的binder驱动的文件句柄加入到lopper的epoll轮训句柄中，所以对于servicemanager这个进程在binder驱动中，其将会处罚poll相关文件操作
+  ```c
+      static sp<BinderCallback> setupTo(const sp<Looper>& looper) {
+        sp<BinderCallback> cb = sp<BinderCallback>::make();
+
+        int binder_fd = -1;
+        IPCThreadState::self()->setupPolling(&binder_fd);
+        LOG_ALWAYS_FATAL_IF(binder_fd < 0, "Failed to setupPolling: %d", binder_fd);
+
+        int ret = looper->addFd(binder_fd,
+                                Looper::POLL_CALLBACK,
+                                Looper::EVENT_INPUT,
+                                cb,
+                                nullptr /*data*/);
+        LOG_ALWAYS_FATAL_IF(ret != 1, "Failed to add binder FD to Looper");
+
+        return cb;
+    }
+  ```
+5. 设置时间处理的回调函数，轮训等待事件并处理
+
+从以上代码中可以看出，在ServiceManager启动时没有主动的启动线程池。那么ServiceManager的线程池是如何创建起来的？
