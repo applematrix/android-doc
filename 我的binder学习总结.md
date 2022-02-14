@@ -619,5 +619,37 @@ binder驱动中每次binder_thread_read都会执行以下逻辑：
 
 那么驱动会发一个spawn_looper的消息给应用程序，由应用程序的ProcessState中新建一个线程，加入到线程池并在binder中注册。
 
-
+### 应用虚拟机的第一个binder线程的启动
+直接上调用栈：
+```console
+startThreadPool: #00 pc 00000000000856d8  /system/lib64/libbinder.so (android::ProcessState::startThreadPool()+136)
+startThreadPool: #01 pc 00000000000029f0  /system/bin/app_process64 (android::AppRuntime::onZygoteInit()+44)
+startThreadPool: #02 pc 00000000001c8420  /system/framework/arm64/boot-framework.oat (art_jni_trampoline+112)
+startThreadPool: #03 pc 0000000000210a00  /apex/com.android.art/lib64/libart.so (art_quick_invoke_static_stub+576)
+startThreadPool: #04 pc 000000000027a2b0  /apex/com.android.art/lib64/libart.so (art::ArtMethod::Invoke(art::Thread*, unsigned int*, unsigned int, art::JValue*, char const*)+240)
+startThreadPool: #05 pc 00000000003d77f0  /apex/com.android.art/lib64/libart.so (art::interpreter::ArtInterpreterToCompiledCodeBridge(art::Thread*, art::ArtMethod*, art::ShadowFrame*, unsigned short, art::JValue*)+428)
+startThreadPool: #06 pc 00000000003d2764  /apex/com.android.art/lib64/libart.so (bool art::interpreter::DoCall<false, false>(art::ArtMethod*, art::Thread*, art::ShadowFrame&, art::Instruction const*, unsigned short, art::JValue*)+776)
+startThreadPool: #07 pc 00000000002248bc  /apex/com.android.art/lib64/libart.so (void art::interpreter::ExecuteSwitchImplCpp<false, false>(art::interpreter::SwitchImplContext*)+22216)
+startThreadPool: #08 pc 000000000021c9d8  /apex/com.android.art/lib64/libart.so (ExecuteSwitchImplAsm+8)
+startThreadPool: #09 pc 00000000002451c4  /system/framework/framework.jar (offset 0x1b14000) (com.android.internal.os.ZygoteInit.zygoteInit)
+startThreadPool: #10 pc 00000000003cb590  /apex/com.android.art/lib64/libart.so (art::interpreter::Execute(art::Thread*, art::CodeItemDataAccessor const&, art::ShadowFrame&, art::JValue, bool, bool)+304)
+startThreadPool: #11 pc 000000000070d500  /apex/com.android.art/lib64/libart.so (artQuickToInterpreterBridge+708)
+startThreadPool: #12 pc 000000000021a288  /apex/com.android.art/lib64/libart.so (art_quick_to_interpreter_bridge+88)
+startThreadPool: #13 pc 0000000000209258  /apex/com.android.art/lib64/libart.so (nterp_helper+152)
+startThreadPool: #14 pc 0000000000247416  /system/framework/framework.jar (offset 0x1b14000) (com.android.internal.os.Zygote.childMain+750)
+startThreadPool: #15 pc 00000000002091f4  /apex/com.android.art/lib64/libart.so (nterp_helper+52)
+startThreadPool: #16 pc 0000000000247580  /system/framework/framework.jar (offset 0x1b14000) (com.android.internal.os.Zygote.forkSimpleApps+16)
+startThreadPool: #17 pc 00000000008b9a50  /system/framework/arm64/boot-framework.oat (com.android.internal.os.ZygoteConnection.processCommand+1104)
+startThreadPool: #18 pc 00000000008bfd98  /system/framework/arm64/boot-framework.oat (com.android.internal.os.ZygoteServer.runSelectLoop+2008)
+startThreadPool: #19 pc 00000000008bbfb8  /system/framework/arm64/boot-framework.oat (com.android.internal.os.ZygoteInit.main+3016)
+startThreadPool: #20 pc 0000000000210a00  /apex/com.android.art/lib64/libart.so (art_quick_invoke_static_stub+576)
+startThreadPool: #21 pc 000000000027a2b0  /apex/com.android.art/lib64/libart.so (art::ArtMethod::Invoke(art::Thread*, unsigned int*, unsigned int, art::JValue*, char const*)+240)
+startThreadPool: #22 pc 00000000005fc9d0  /apex/com.android.art/lib64/libart.so (art::JValue art::InvokeWithVarArgs<art::ArtMethod*>(art::ScopedObjectAccessAlreadyRunnable const&, _jobject*, art::ArtMethod*, std::__va_list)+448)
+startThreadPool: #23 pc 00000000005fce88  /apex/com.android.art/lib64/libart.so (art::JValue art::InvokeWithVarArgs<_jmethodID*>(art::ScopedObjectAccessAlreadyRunnable const&, _jobject*, _jmethodID*, std::__va_list)+92)
+startThreadPool: #24 pc 00000000004e8644  /apex/com.android.art/lib64/libart.so (art::JNI<true>::CallStaticVoidMethodV(_JNIEnv*, _jclass*, _jmethodID*, std::__va_list)+596)
+startThreadPool: #25 pc 00000000000afab0  /system/lib64/libandroid_runtime.so (_JNIEnv::CallStaticVoidMethod(_jclass*, _jmethodID*, ...)+120)
+startThreadPool: #26 pc 00000000000bb278  /system/lib64/libandroid_runtime.so (android::AndroidRuntime::start(char const*, android::Vector<android::String8> const&, bool)+848)
+startThreadPool: #27 pc 0000000000002580  /system/bin/app_process64 (main+1324)
+startThreadPool: #28 pc 0000000000049cac  /apex/com.android.runtime/lib64/bionic/libc.so (__libc_init+96)
+```
 
