@@ -514,6 +514,110 @@ int main(int argc, char** argv) {
         return cb;
     }
   ```
-5. 设置时间处理的回调函数，轮训等待事件并处理
+5. 设置时间处理的回调函数，轮询等待事件并处理
 
 从以上代码中可以看出，在ServiceManager启动时没有主动的启动线程池。那么ServiceManager的线程池是如何创建起来的？
+
+![](images/binder/servicemanager1.png)
+
+如上图所示，servicemanager启动后，将在binder驱动中创建出一个servicemanager的binder_proc对象，由于servicemanager将其中的binder对象（sp<ServiceManager>）注册到驱动中，根据前面的分析，将在binder驱动中创建出一个binder_node的对象出来，而且该binder_node的handle值为0，当应用调用ServiceManager的getService时，首先将通过ServiceManager的getContextObject，该调用将会执行到binder驱动中，binder驱动为该调用线程生成一个binder_thread的对象，binder驱动根据app发送过来的请求，查找目标binder_proc，对于getContextObject的调用，其中指定的handle为0，所以在以下代码（binder_transaction）中执行else分支，直接找到系统中的contextManager的Node对象。
+```c
+		if (tr->target.handle) {
+			struct binder_ref *ref;
+
+			/*
+			 * There must already be a strong ref
+			 * on this node. If so, do a strong
+			 * increment on the node to ensure it
+			 * stays alive until the transaction is
+			 * done.
+			 */
+			binder_proc_lock(proc);
+			ref = binder_get_ref_olocked(proc, tr->target.handle,
+						     true);
+			if (ref) {
+				target_node = binder_get_node_refs_for_txn(
+						ref->node, &target_proc,
+						&return_error);
+			} else {
+				binder_user_error("%d:%d got transaction to invalid handle, %u\n",
+						  proc->pid, thread->pid, tr->target.handle);
+				return_error = BR_FAILED_REPLY;
+			}
+			binder_proc_unlock(proc);
+		} else {
+			mutex_lock(&context->context_mgr_node_lock);
+			target_node = context->binder_context_mgr_node;
+			if (target_node)
+				target_node = binder_get_node_refs_for_txn(
+						target_node, &target_proc,
+						&return_error);
+			else
+				return_error = BR_DEAD_REPLY;
+			...
+		}
+
+```
+如前面所述，binder调用要进行传输，需要在目标的binder_proc中找到一个binder_thread（对应一个线程），将对应的请求发送过去，但是由于ServiceManager中没有binder_thread对象。所以在binder_proc_transaction中会执行以下操作：
+```c
+	if (thread) {
+		binder_transaction_priority(thread->task, t, node_prio,
+					    node->inherit_rt);
+		binder_enqueue_thread_work_ilocked(thread, &t->work);
+	} else if (!pending_async) {
+		binder_enqueue_work_ilocked(&t->work, &proc->todo);
+	} else {
+		binder_enqueue_work_ilocked(&t->work, &node->async_todo);
+	}
+
+	if (!pending_async)
+		binder_wakeup_thread_ilocked(proc, thread, !oneway /* sync */);
+
+	proc->outstanding_txns++;
+	binder_inner_proc_unlock(proc);
+	binder_node_unlock(node);
+
+```
+thread表示对应的binder_thread对象，由于无binder_thread对象，所以会执行到第二个else分支（只考虑非阻塞调用binder的场景），将对应的transaction传输请求放到binder_proc的todo队列中，然后调用binder_wakeup_thread_ilocked执行唤醒线程的操作。
+
+在驱动中从ioctl到唤醒线程的执行的过程如下：
+
+![](images/binder/ioctl-thread.png)
+
+
+### binder线程产卵（spawn）
+
+binder线程的产卵过程如下图所示：
+![](images/binder/binder-spawnthread.png)
+
+binder驱动中每次binder_thread_read都会执行以下逻辑：
+```c
+	*consumed = ptr - buffer;
+	binder_inner_proc_lock(proc);
+	if (proc->requested_threads == 0 &&
+	    list_empty(&thread->proc->waiting_threads) &&
+	    proc->requested_threads_started < proc->max_threads &&
+	    (thread->looper & (BINDER_LOOPER_STATE_REGISTERED |
+	     BINDER_LOOPER_STATE_ENTERED)) /* the user-space code fails to */
+	     /*spawn a new thread if we leave this out */) {
+		proc->requested_threads++;
+		binder_inner_proc_unlock(proc);
+		binder_debug(BINDER_DEBUG_THREADS,
+			     "%d:%d BR_SPAWN_LOOPER\n",
+			     proc->pid, thread->pid);
+		if (put_user(BR_SPAWN_LOOPER, (uint32_t __user *)buffer))
+			return -EFAULT;
+		binder_stat_br(proc, thread, BR_SPAWN_LOOPER);
+	} else
+		binder_inner_proc_unlock(proc);
+
+```
+如果：
+1. 进程中没有正在产卵的线程（requested_threads）
+2. 当前的进程的binder线程数没有达到上限
+3. 当前执行binder_read的线程时注册的binder线程
+
+那么驱动会发一个spawn_looper的消息给应用程序，由应用程序的ProcessState中新建一个线程，加入到线程池并在binder中注册。
+
+
+
