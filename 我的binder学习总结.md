@@ -1,4 +1,4 @@
-# 我的binder学习总结
+# binder学习杂记
 
 ## binder驱动中的数据结构
 
@@ -619,7 +619,8 @@ binder驱动中每次binder_thread_read都会执行以下逻辑：
 
 那么驱动会发一个spawn_looper的消息给应用程序，由应用程序的ProcessState中新建一个线程，加入到线程池并在binder中注册。
 
-### 应用虚拟机的第一个binder线程的启动
+
+- ### 应用虚拟机的第一个binder线程的启动
 直接上调用栈：
 ```console
 startThreadPool: #00 pc 00000000000856d8  /system/lib64/libbinder.so (android::ProcessState::startThreadPool()+136)
@@ -652,4 +653,13 @@ startThreadPool: #26 pc 00000000000bb278  /system/lib64/libandroid_runtime.so (a
 startThreadPool: #27 pc 0000000000002580  /system/bin/app_process64 (main+1324)
 startThreadPool: #28 pc 0000000000049cac  /apex/com.android.runtime/lib64/bionic/libc.so (__libc_init+96)
 ```
+应用App的第一个binder线程的启动主要过程如下所示：
+![](images/binder/app_first_binder_thread.png)
+
+每个App应用的进程都是zygote fork出来的，fork后zygote出时化完成将会回调AndroidRuntime的onZygoteInit回调，在该回调中将调用startThreadPool启动binder线程。后续将通过前面所说的binder线程的产卵过程产卵。
+
+### binder_thread的todo队列
+
+
+
 
