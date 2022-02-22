@@ -430,7 +430,30 @@ static int binder_translate_binder(struct flat_binder_object *fp,
 
 ### binder_ref 
 binder_ref数据结构如下：
+``` c
+struct binder_ref {
+	/* Lookups needed: */
+	/*   node + proc => ref (transaction) */
+	/*   desc + proc => ref (transaction, inc/dec ref) */
+	/*   node => refs + procs (proc exit) */
+	struct binder_ref_data data;
+	struct rb_node rb_node_desc;
+	struct rb_node rb_node_node;
+	struct hlist_node node_entry;
+	struct binder_proc *proc;
+	struct binder_node *node;
+	struct binder_ref_death *death;
+};
 
+struct binder_ref_data {
+	int debug_id;
+	uint32_t desc;
+	int strong;
+	int weak;
+};
+
+```
+主要通过其中的binder_ref_data的数据来记录binder的引用
 
 
 ### binder_transaction
@@ -659,6 +682,22 @@ startThreadPool: #28 pc 0000000000049cac  /apex/com.android.runtime/lib64/bionic
 每个App应用的进程都是zygote fork出来的，fork后zygote出时化完成将会回调AndroidRuntime的onZygoteInit回调，在该回调中将调用startThreadPool启动binder线程。后续将通过前面所说的binder线程的产卵过程产卵。
 
 ### binder_thread的todo队列
+binder_thread中的todo队列，用于存储对应线程需要处理的所有传输数据。在binder_proc_transaction中:
+```c
+	if (thread) {
+		binder_transaction_priority(thread->task, t, node_prio,
+					    node->inherit_rt);
+		binder_enqueue_thread_work_ilocked(thread, &t->work);
+	} else if (!pending_async) {
+		binder_enqueue_work_ilocked(&t->work, &proc->todo);
+	} else {
+		binder_enqueue_work_ilocked(&t->work, &node->async_todo);
+	}
+
+```
+如果select thread时找到了对应的线程对象，则将对应的work加入到线程的todo列表中，否则：
+- 如果该次请求传输是同步的，则将对应的work加入到进程的todo列表中
+- 如果该次请求传输是异步的，则将其加入到进程的异步todo列表中
 
 
 
