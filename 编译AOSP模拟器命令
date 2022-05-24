@@ -1,0 +1,6 @@
+source ./build/envsetup.sh
+lunch sdk_phone_x86_64
+make -j12
+
+sdk_phone_x86_64可以替换为sdk_phone_x86
+该设备类型，只执行lunch不会显示出来
