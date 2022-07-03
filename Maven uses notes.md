@@ -1,5 +1,7 @@
 # Maven uses notes
 
+## 创建工程
+mvn archetype:generate
 
 
 ## 编译失败
