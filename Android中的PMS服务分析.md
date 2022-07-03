@@ -92,6 +92,6 @@ Uid的分配示意图如下所示：
 整体结构如上图所示，在PMS中如果需要扫描应用，将通过PackageParser2来扫描，扫描时首先通过PackageCacher来查询缓存目录中是否有对应应用的缓存信息如果，有缓存则将直接从缓存中恢复出ParsedPackage，即应用的解析信息，不在需要重新扫描apk。反之，如果对应的目录下没有缓存，那么将解析apk，并从apk的AndroidManifest中解析出应用信息，最后在通过缓存保存接口将应用信息保存，下次开机可以直接使用缓存而无再次扫描。
 
 ### 应用的缓存内容
-应用缓存的内容很简单，即是将ParsedPackage序列化为二进制流后直接写入到文件中。因为系统中的ParsedPackage对象实现了了Parcelable解耦，直接通过Parcel的相关接口序列化和反序列化。读取缓存也很简单，
+应用缓存的内容很简单，即是将ParsedPackage序列化为二进制流后直接写入到文件中。因为系统中的ParsedPackage对象实现了了Parcelable解耦，直接通过Parcel的相关接口序列化和反序列化。读取缓存也很简单，直接由ParsedPackage从二进制流中反序列化出对应的对象。
 
 ## dex2oat编译
