@@ -4,3 +4,10 @@ make -j12
 
 sdk_phone_x86_64可以替换为sdk_phone_x86
 该设备类型，只执行lunch不会显示出来
+
+编译后通过：
+emulator
+命令可以启动模拟器
+
+如果需要修改系统镜像，那需要以下命令
+emulator -writable-system
